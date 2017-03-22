@@ -18,7 +18,12 @@ export default {
       app = firebase.initializeApp(config.firebase);
     }
 
-    return app.database().ref();
+    if (config.firebase.baseRef) {
+        return app.database().ref(config.firebase.baseRef);
+    } else {
+        return app.database().ref();
+    }
+
   },
 
   config: null,
