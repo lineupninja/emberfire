@@ -752,6 +752,10 @@ export default DS.Adapter.extend(Waitable, {
       const { payload, modelName } = this._queuedPayloads[key];
       const normalizedData = store.normalize(modelName, payload);
       store.push(normalizedData);
+      let record = store.peekRecord(modelName, normalizedData.data.id);
+      if (record) {
+        record.didUpdate();
+      }
     });
     this._queuedPayloads = {};
     this._queue.length = 0;
@@ -773,6 +777,10 @@ export default DS.Adapter.extend(Waitable, {
     if (!this._queueFlushDelay) {
       const normalizedData = store.normalize(modelName, payload);
       store.push(normalizedData);
+      let record = store.peekRecord(modelName, normalizedData.data.id);
+      if (record) {
+        record.didUpdate();
+      }
       return;
     }
 
