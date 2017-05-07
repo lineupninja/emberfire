@@ -145,11 +145,10 @@ export default DS.Adapter.extend(Waitable, {
 
       ref.once('value', (snapshot) => {
         this._decrementWaiters();
-        Ember.run.scheduleOnce('afterRender', this, resolve, snapshot);
-
+        Ember.run(null, resolve, snapshot);
       }, (err) => {
         this._decrementWaiters();
-        Ember.run.scheduleOnce('afterRender', this, reject, err);
+        Ember.run(null, reject, err);
       });
 
     }, log);
@@ -812,14 +811,29 @@ export default DS.Adapter.extend(Waitable, {
    */
   _updateRecordCacheForType(typeClass, payload, store) {
     if (!payload) { return; }
-    var id = payload.id;
-    var cache = this._getRecordCache(typeClass, id);
+    const id = payload.id;
+    const cache = this._getRecordCache(typeClass, id);
     const serializer = store.serializerFor(typeClass.modelName);
     // Only cache relationships for now
+    // and do the same for embedded records
     typeClass.eachRelationship((key, relationship) => {
       if (relationship.kind === 'hasMany') {
-        var ids = payload[serializer.keyForRelationship(key)];
-        cache[key] = !Ember.isNone(ids) ? Ember.A(Object.keys(ids)) : Ember.A();
+        const relationshipPayload = payload[serializer.keyForRelationship(key)];
+        if (!relationshipPayload) {
+          cache[key] = Ember.A();
+        } else {
+          const isEmbedded = this.isRelationshipEmbedded(store, typeClass.modelName, relationship);
+          if (isEmbedded) {
+            const relationshipTypeClass = store.modelFor(relationship.type);
+            forEach(relationshipPayload, (obj, id) => {
+              obj.id = id;
+              this._updateRecordCacheForType(relationshipTypeClass, obj, store);
+            });
+          } else {
+            const ids = Object.keys(relationshipPayload);
+            cache[key] = Ember.A(ids);
+          }
+        }
       }
     });
   },
