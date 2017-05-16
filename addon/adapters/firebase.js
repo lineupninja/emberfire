@@ -657,8 +657,8 @@ export default DS.Adapter.extend(Waitable, {
    * @return {Firebase}
    */
   _getAbsoluteRef(record) {
-    if (record._internalModel) {
-      record = record._internalModel;
+    if (Ember.get(record,'_internalModel')) {
+      record = Ember.get(record,'_internalModel');
     }
 
     var embeddingParent = this.getFirstEmbeddingParent(record);
