@@ -639,7 +639,15 @@ export default DS.Adapter.extend(Waitable, {
    * Return a Firebase reference for a given modelName and optional ID.
    */
   _getCollectionRef(typeClass, id) {
+    let classModel = this.store.modelFor(typeClass.modelName);
+    let prefix = null;
+    if (classModel.pathPrefix) {
+      prefix = classModel.pathPrefix(this);
+    }
     var ref = this._ref;
+    if (prefix) {
+      ref = ref.child(prefix);
+    }
     if (typeClass) {
       ref = ref.child(this.pathForType(typeClass.modelName));
     }
@@ -657,8 +665,8 @@ export default DS.Adapter.extend(Waitable, {
    * @return {Firebase}
    */
   _getAbsoluteRef(record) {
-    if (record._internalModel) {
-      record = record._internalModel;
+    if (Ember.get(record,_internalModel)) {
+      record = Ember.get(record,_internalModel);
     }
 
     var embeddingParent = this.getFirstEmbeddingParent(record);
